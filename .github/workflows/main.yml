@@ -1,0 +1,55 @@
+
+name: Build OneLineage APK
+
+on:
+  push:
+    branches:
+      - android17
+  pull_request:
+    branches:
+      - android17
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK packages
+        run: |
+          sdkmanager --install \
+            "platforms;android-34" \
+            "build-tools;34.0.0"
+          yes | sdkmanager --licenses
+
+      - name: Build APK
+        env:
+          BUILD_TZ: UTC
+          BUILD_TAG: GitHub Actions
+        run: |
+          chmod +x build_apk.sh
+          ./build_apk.sh
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: OneLineage-debug-apk
+          path: build/OneLineage.apk
+          if-no-files-found: error
+          retention-days: 14
